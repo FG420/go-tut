@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Page</title>
+    <style>
+        .title-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .form-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="title-container">
+            <h1>Editing {{.Title}}</h1>
+        </div>
+
+        <div class="form-container">
+            <form action="/save/{{.Title}}" method="POST">
+                <div>
+                    <textarea rows="10" cols="30" name="body">
+                        {{printf "%s" .Body}}
+                    </textarea>
+                    <br>
+                </div>
+                <div class="btn-container">
+                    <input type="submit" value="Save">
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

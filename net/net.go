@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
 	"regexp"
 
 	tmpl "example.com/template"
@@ -10,21 +12,27 @@ import (
 	gowiki "example.com/wiki"
 )
 
-// var tmpls = template.Must(template.ParseFiles("edit.html", "view.html"))
+var port = ":8080"
 var validatePath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 
-// func renderTemplate(w http.ResponseWriter, tmpl string, p *gowiki.Page) {
-// 	err := tmpls.ExecuteTemplate(w, tmpl+".html", p)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-// }
-
 func handler(w http.ResponseWriter, r *http.Request) {
-	// fmt.Fprintf(w, "Hi there!")
 
-	viewHandler(w, r, "newPage")
+	docs, err := filepath.Glob("./*.txt")
+	if err != nil {
+		fmt.Println("Yikes!")
+	}
+
+	for _, file := range docs {
+
+		title := file[:len(file)-len(filepath.Ext(file))]
+		p, err := gowiki.LoadPage(title)
+		if err != nil {
+			fmt.Println("Yikes! x 2")
+		}
+		tmpl.RenderTemplate(w, "docs", p)
+	}
+	tmpl.RenderMain(w, "main", "")
+
 }
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
@@ -57,6 +65,23 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	tmpl.RenderTemplate(w, "edit", p)
 }
 
+func formHandler(w http.ResponseWriter, _ *http.Request) {
+	tmpl.RenderMain(w, "create", "")
+}
+
+func newDocHandler(w http.ResponseWriter, r *http.Request) {
+	docTitle := r.FormValue("title")
+	docBody := r.FormValue("body")
+	p := &gowiki.Page{Title: docTitle, Body: []byte(docBody)}
+	err := p.Save()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body := r.FormValue("body")
 
@@ -71,12 +96,17 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 func main() {
+
 	log.Println("Server Starting")
-	// log.Println("Port used:       localhost:8080")
+	if port != "" {
+		log.Println(`Port used: http://localhost` + port)
+	}
 	http.HandleFunc("/", handler)
+	http.HandleFunc("/create/", formHandler)
+	http.HandleFunc("/new/", newDocHandler)
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(port, nil))
 }

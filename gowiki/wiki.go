@@ -22,14 +22,3 @@ func LoadPage(title string) (*Page, error) {
 	}
 	return &Page{Title: title, Body: body}, nil
 }
-
-// func main() {
-// p1 := &Page{Title: "Il Cantico delle Balene",
-// 	Body: []byte("Il canto delle balene consiste in una serie di suoni emessi dai cetacei per poter comunicare.")}
-
-// p1.save()
-
-// p2, _ := loadPage(p1.Title)
-// fmt.Println(string(p2.Body))
-
-// }
